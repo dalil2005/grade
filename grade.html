@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur de Moyennes - Semestres 5 et 6 (avec Sauvegarde)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .semester {
+            margin-bottom: 40px;
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #2980b9;
+            color: white;
+        }
+        input {
+            width: 70px;
+            text-align: center;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            padding: 4px;
+        }
+        .results {
+            margin-top: 30px;
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #bdc3c7;
+        }
+        .module-details table th {
+            background-color: #e67e22;
+            color: white;
+        }
+        .avg-good { color: #27ae60; font-weight: bold; }
+        .avg-bad  { color: #c0392b; font-weight: bold; }
+        .module-grade {
+            font-weight: bold;
+            min-width: 60px;
+        }
+        .na { color: #777; font-style: italic; }
+        #status {
+            text-align: center;
+            font-size: 0.9em;
+            color: #555;
+            margin: 10px 0;
+        }
+        button#clear {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+        }
+        button#clear:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculateur de Moyennes - Semestres 5 et 6 (sauvegarde automatique)</h1>
+    <div id="status">Chargement des notes précédentes...</div>
+    
+    <div class="semester" id="sem5">
+        <h2>Semestre 5</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Module</th>
+                    <th>Coeff</th>
+                    <th>Note Continu (/20)</th>
+                    <th>Note Examen (/20)</th>
+                    <th>Note Module (/20)</th>
+                </tr>
+            </thead>
+            <tbody id="sem5-body"></tbody>
+        </table>
+    </div>
+    
+    <div class="semester" id="sem6">
+        <h2>Semestre 6</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Module</th>
+                    <th>Coeff</th>
+                    <th>Note Continu (/20)</th>
+                    <th>Note Examen (/20)</th>
+                    <th>Note Module (/20)</th>
+                </tr>
+            </thead>
+            <tbody id="sem6-body"></tbody>
+        </table>
+    </div>
+
+    <button id="clear">Effacer toutes les notes sauvegardées</button>
+    
+    <div class="results" id="results"></div>
+
+    <script>
+        const STORAGE_KEY = 'notes_sem5_sem6_2025';
+
+        const sem5Modules = [
+            {name: "Architecture et Administration des BDD", coeff: 4, continu: 40, examen: 60},
+            {name: "Compilation", coeff: 4, continu: 40, examen: 60},
+            {name: "Programmation Linéaire et Dynamique", coeff: 3, continu: 40, examen: 60},
+            {name: "Analyse numérique 1", coeff: 2, continu: 40, examen: 60},
+            {name: "Génie logiciel", coeff: 2, continu: 40, examen: 60},
+            {name: "Fondements de l'IA", coeff: 3, continu: 40, examen: 60},
+            {name: "Interface Homme Machine", coeff: 2, continu: 40, examen: 60}
+        ];
+
+        const sem6Modules = [
+            {name: "Gestion des bases de données réparties", coeff: 3, continu: 40, examen: 60},
+            {name: "Système d'Exploitation : Synchronisation et Communication", coeff: 4, continu: 40, examen: 60},
+            {name: "Gestion de Projets", coeff: 4, continu: 40, examen: 60},
+            {name: "Programmation WEB", coeff: 3, continu: 40, examen: 60},
+            {name: "Analyse numérique 2", coeff: 2, continu: 40, examen: 60},
+            {name: "Introduction à la sécurité Informatique", coeff: 2, continu: 40, examen: 60},
+            {name: "Introduction à l'IA", coeff: 2, continu: 0, examen: 100},
+            {name: "Ethique de l'IA", coeff: 2, continu: 0, examen: 100}
+        ];
+
+        function createRow(mod, semId, index) {
+            return `
+                <tr>
+                    <td>${mod.name}</td>
+                    <td>${mod.coeff}</td>
+                    <td>${mod.continu > 0 ? `<input type="number" class="input-note" data-sem="${semId}" data-index="${index}" data-type="cc" min="0" max="20" step="0.01">` : '<span class="na">N/A</span>'}</td>
+                    <td>${mod.examen > 0 ? `<input type="number" class="input-note" data-sem="${semId}" data-index="${index}" data-type="ex" min="0" max="20" step="0.01">` : '<span class="na">N/A</span>'}</td>
+                    <td id="${semId}_mod_${index}" class="module-grade"></td>
+                </tr>
+            `;
+        }
+
+        function populateTables() {
+            document.getElementById('sem5-body').innerHTML = sem5Modules.map((mod, i) => createRow(mod, 'sem5', i)).join('');
+            document.getElementById('sem6-body').innerHTML = sem6Modules.map((mod, i) => createRow(mod, 'sem6', i)).join('');
+
+            // Load saved values
+            loadSavedNotes();
+
+            // Auto-save on input + live calc
+            document.querySelectorAll('.input-note').forEach(input => {
+                input.addEventListener('input', debounce(saveAndCalculate, 500));
+            });
+        }
+
+        // Debounce function to avoid saving too often
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function getAllNotes() {
+            const notes = {};
+            document.querySelectorAll('.input-note').forEach(input => {
+                if (input.value !== '') {
+                    const key = `${input.dataset.sem}-${input.dataset.index}-${input.dataset.type}`;
+                    notes[key] = input.value;
+                }
+            });
+            return notes;
+        }
+
+        function saveAndCalculate() {
+            const notes = getAllNotes();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+            document.getElementById('status').textContent = 'Notes sauvegardées ✓';
+            setTimeout(() => {
+                document.getElementById('status').textContent = '';
+            }, 2000);
+            calculateAverages();
+        }
+
+        function loadSavedNotes() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) {
+                document.getElementById('status').textContent = 'Aucune note sauvegardée précédemment';
+                calculateAverages();
+                return;
+            }
+
+            const notes = JSON.parse(saved);
+            Object.keys(notes).forEach(key => {
+                const [sem, index, type] = key.split('-');
+                const input = document.querySelector(`.input-note[data-sem="${sem}"][data-index="${index}"][data-type="${type}"]`);
+                if (input) {
+                    input.value = notes[key];
+                }
+            });
+
+            document.getElementById('status').textContent = 'Notes précédentes chargées';
+            calculateAverages();
+        }
+
+        document.getElementById('clear').addEventListener('click', () => {
+            if (confirm('Vraiment effacer TOUTES les notes sauvegardées ?')) {
+                localStorage.removeItem(STORAGE_KEY);
+                document.querySelectorAll('.input-note').forEach(i => i.value = '');
+                document.getElementById('status').textContent = 'Toutes les notes ont été effacées';
+                calculateAverages();
+            }
+        });
+
+        // ───────────────────────────────────────────────
+        // The calculation functions remain the same
+        // ───────────────────────────────────────────────
+
+        function calculateSemester(modules, semId) {
+            let totalWeighted = 0;
+            let totalCoeff = 0;
+            let details = [];
+
+            modules.forEach((mod, index) => {
+                const ccEl = document.querySelector(`.input-note[data-sem="${semId}"][data-index="${index}"][data-type="cc"]`);
+                const exEl = document.querySelector(`.input-note[data-sem="${semId}"][data-index="${index}"][data-type="ex"]`);
+                
+                const cc = ccEl ? parseFloat(ccEl.value) || 0 : 0;
+                const ex = exEl ? parseFloat(exEl.value) || 0 : 0;
+                
+                const grade = (cc * (mod.continu / 100)) + (ex * (mod.examen / 100));
+                
+                const gradeCell = document.getElementById(`${semId}_mod_${index}`);
+                if ((ccEl && ccEl.value !== '') || (exEl && exEl.value !== '')) {
+                    gradeCell.textContent = grade.toFixed(2);
+                    gradeCell.style.color = grade >= 10 ? '#27ae60' : '#c0392b';
+                } else {
+                    gradeCell.textContent = '';
+                }
+
+                totalWeighted += grade * mod.coeff;
+                totalCoeff += mod.coeff;
+                details.push({name: mod.name, grade: grade.toFixed(2)});
+            });
+
+            const avg = totalCoeff > 0 ? (totalWeighted / totalCoeff).toFixed(2) : '0.00';
+            return {avg, details, totalCoeff};
+        }
+
+        function getAvgClass(avg) {
+            return parseFloat(avg) >= 10 ? 'avg-good' : 'avg-bad';
+        }
+
+        function calculateAverages() {
+            const sem5 = calculateSemester(sem5Modules, 'sem5');
+            const sem6 = calculateSemester(sem6Modules, 'sem6');
+
+            const yearAvg = ((parseFloat(sem5.avg) + parseFloat(sem6.avg)) / 2).toFixed(2);
+
+            let html = `
+                <h2>Résultats</h2>
+                <h3>Semestre 5 - Moyenne : <span class="${getAvgClass(sem5.avg)}">${sem5.avg} / 20</span> 
+                    (Coeff total : ${sem5.totalCoeff})</h3>
+                <div class="module-details">
+                    <table>
+                        <tr><th>Module</th><th>Note</th></tr>
+                        ${sem5.details.map(d => `<tr><td>${d.name}</td><td>${d.grade}</td></tr>`).join('')}
+                    </table>
+                </div>
+
+                <h3>Semestre 6 - Moyenne : <span class="${getAvgClass(sem6.avg)}">${sem6.avg} / 20</span> 
+                    (Coeff total : ${sem6.totalCoeff})</h3>
+                <div class="module-details">
+                    <table>
+                        <tr><th>Module</th><th>Note</th></tr>
+                        ${sem6.details.map(d => `<tr><td>${d.name}</td><td>${d.grade}</td></tr>`).join('')}
+                    </table>
+                </div>
+
+                <h3>Moyenne Annuelle : <span class="${getAvgClass(yearAvg)}">${yearAvg} / 20</span></h3>
+            `;
+
+            document.getElementById('results').innerHTML = html;
+        }
+
+        populateTables();
+    </script>
+</body>
+</html>
