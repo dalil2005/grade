@@ -3,124 +3,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculateur de Moyennes - Semestres 5 et 6 (avec Sauvegarde)</title>
+    <title>Calculateur de Moyennes - Semestres 5 et 6</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #2c3e50;
-        }
-        .semester {
-            margin-bottom: 40px;
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #2980b9;
-            color: white;
-        }
-        input {
-            width: 70px;
-            text-align: center;
-            border: 1px solid #aaa;
-            border-radius: 4px;
-            padding: 4px;
-        }
-        .results {
-            margin-top: 30px;
-            background-color: #ecf0f1;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
             padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #bdc3c7;
+            line-height: 1.6;
         }
-        .module-details table th {
-            background-color: #e67e22;
-            color: white;
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .avg-good { color: #27ae60; font-weight: bold; }
-        .avg-bad  { color: #c0392b; font-weight: bold; }
-        .module-grade {
-            font-weight: bold;
-            min-width: 60px;
+
+        h1 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .na { color: #777; font-style: italic; }
+
         #status {
             text-align: center;
-            font-size: 0.9em;
-            color: #555;
-            margin: 10px 0;
+            font-size: 0.875rem;
+            color: #888;
+            margin-bottom: 30px;
+            min-height: 20px;
+            transition: all 0.3s ease;
         }
-        button#clear {
-            background: #e74c3c;
-            color: white;
+
+        #status.success {
+            color: #00ff00;
+        }
+
+        .semester {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: clamp(20px, 4vw, 35px);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .semester:hover {
+            border-color: #555;
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.05);
+        }
+
+        h2 {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            margin-bottom: 20px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #222;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -10px;
+            padding: 0 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: clamp(10px, 2vw, 16px);
+            text-align: left;
+            border-bottom: 1px solid #222;
+        }
+
+        th {
+            background: #1a1a1a;
+            color: #fff;
+            font-weight: 600;
+            font-size: clamp(0.75rem, 2vw, 0.875rem);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #0a0a0a;
+        }
+
+        td {
+            font-size: clamp(0.875rem, 2vw, 1rem);
+        }
+
+        td:first-child {
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            max-width: 80px;
+            padding: 8px 12px;
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #666;
+            background: #0a0a0a;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .module-grade {
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 60px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .avg-good {
+            color: #00ff00;
+        }
+
+        .avg-bad {
+            color: #ff0000;
+        }
+
+        .na {
+            color: #555;
+            font-style: italic;
+            font-size: 0.875rem;
+        }
+
+        .results {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: clamp(25px, 4vw, 40px);
+            margin-top: 40px;
+        }
+
+        .results h2 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            text-align: center;
+            margin-bottom: 30px;
             border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
+        }
+
+        .results h3 {
+            font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+            margin: 25px 0 15px 0;
+            font-weight: 600;
+        }
+
+        .module-details {
+            margin-bottom: 30px;
+        }
+
+        .module-details table {
+            min-width: 100%;
+            background: #0a0a0a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .module-details th {
+            background: #000;
+            border-bottom: 2px solid #333;
+        }
+
+        .module-details td {
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+        }
+
+        .module-details tr:last-child td {
+            border-bottom: none;
+        }
+
+        .yearly-avg {
+            text-align: center;
+            padding: 30px;
+            margin-top: 30px;
+            background: #000;
+            border-radius: 12px;
+            border: 2px solid #333;
+        }
+
+        .yearly-avg h3 {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            margin: 0;
+        }
+
+        .yearly-avg .score {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        button#clear {
+            background: #000;
+            color: #fff;
+            border: 2px solid #ff0000;
+            padding: 14px 28px;
+            border-radius: 12px;
             cursor: pointer;
             display: block;
-            margin: 20px auto;
+            margin: 30px auto;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
+
         button#clear:hover {
-            background: #c0392b;
+            background: #ff0000;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 0, 0, 0.3);
+        }
+
+        button#clear:active {
+            transform: translateY(0);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .semester {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+            }
+
+            table {
+                min-width: 550px;
+                font-size: 0.875rem;
+            }
+
+            th, td {
+                padding: 10px 8px;
+            }
+
+            input {
+                max-width: 70px;
+                padding: 6px 8px;
+                font-size: 0.9rem;
+            }
+
+            .results {
+                padding: 20px 15px;
+            }
+
+            .table-wrapper {
+                margin: 0 -15px;
+                padding: 0 15px;
+            }
+
+            /* Scrollbar styling for mobile */
+            .table-wrapper::-webkit-scrollbar {
+                height: 8px;
+            }
+
+            .table-wrapper::-webkit-scrollbar-track {
+                background: #111;
+                border-radius: 4px;
+            }
+
+            .table-wrapper::-webkit-scrollbar-thumb {
+                background: #333;
+                border-radius: 4px;
+            }
+
+            .table-wrapper::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+        }
+
+        @media (max-width: 480px) {
+            table {
+                min-width: 500px;
+            }
+
+            th, td {
+                padding: 8px 6px;
+                font-size: 0.8rem;
+            }
+
+            input {
+                max-width: 60px;
+                padding: 5px 6px;
+                font-size: 0.85rem;
+            }
+
+            .module-grade {
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .semester {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .semester:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .semester:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        /* Loading state */
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <h1>Calculateur de Moyennes - Semestres 5 et 6 (sauvegarde automatique)</h1>
-    <div id="status">Chargement des notes précédentes...</div>
-    
-    <div class="semester" id="sem5">
-        <h2>Semestre 5</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Module</th>
-                    <th>Coeff</th>
-                    <th>Note Continu (/20)</th>
-                    <th>Note Examen (/20)</th>
-                    <th>Note Module (/20)</th>
-                </tr>
-            </thead>
-            <tbody id="sem5-body"></tbody>
-        </table>
-    </div>
-    
-    <div class="semester" id="sem6">
-        <h2>Semestre 6</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Module</th>
-                    <th>Coeff</th>
-                    <th>Note Continu (/20)</th>
-                    <th>Note Examen (/20)</th>
-                    <th>Note Module (/20)</th>
-                </tr>
-            </thead>
-            <tbody id="sem6-body"></tbody>
-        </table>
-    </div>
+    <div class="container">
+        <h1>Calculateur de Moyennes</h1>
+        <div id="status">Chargement des notes précédentes...</div>
+        
+        <div class="semester" id="sem5">
+            <h2>Semestre 5</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Coeff</th>
+                            <th>Continu</th>
+                            <th>Examen</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sem5-body"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="semester" id="sem6">
+            <h2>Semestre 6</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Coeff</th>
+                            <th>Continu</th>
+                            <th>Examen</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sem6-body"></tbody>
+                </table>
+            </div>
+        </div>
 
-    <button id="clear">Effacer toutes les notes sauvegardées</button>
-    
-    <div class="results" id="results"></div>
+        <button id="clear">Effacer toutes les notes</button>
+        
+        <div class="results" id="results"></div>
+    </div>
 
     <script>
         const STORAGE_KEY = 'notes_sem5_sem6_2025';
@@ -162,16 +459,13 @@
             document.getElementById('sem5-body').innerHTML = sem5Modules.map((mod, i) => createRow(mod, 'sem5', i)).join('');
             document.getElementById('sem6-body').innerHTML = sem6Modules.map((mod, i) => createRow(mod, 'sem6', i)).join('');
 
-            // Load saved values
             loadSavedNotes();
 
-            // Auto-save on input + live calc
             document.querySelectorAll('.input-note').forEach(input => {
                 input.addEventListener('input', debounce(saveAndCalculate, 500));
             });
         }
 
-        // Debounce function to avoid saving too often
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -198,9 +492,12 @@
         function saveAndCalculate() {
             const notes = getAllNotes();
             localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-            document.getElementById('status').textContent = 'Notes sauvegardées ✓';
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'Notes sauvegardées ✓';
+            statusEl.classList.add('success');
             setTimeout(() => {
-                document.getElementById('status').textContent = '';
+                statusEl.textContent = '';
+                statusEl.classList.remove('success');
             }, 2000);
             calculateAverages();
         }
@@ -235,10 +532,6 @@
             }
         });
 
-        // ───────────────────────────────────────────────
-        // The calculation functions remain the same
-        // ───────────────────────────────────────────────
-
         function calculateSemester(modules, semId) {
             let totalWeighted = 0;
             let totalCoeff = 0;
@@ -256,14 +549,15 @@
                 const gradeCell = document.getElementById(`${semId}_mod_${index}`);
                 if ((ccEl && ccEl.value !== '') || (exEl && exEl.value !== '')) {
                     gradeCell.textContent = grade.toFixed(2);
-                    gradeCell.style.color = grade >= 10 ? '#27ae60' : '#c0392b';
+                    gradeCell.className = 'module-grade ' + (grade >= 10 ? 'avg-good' : 'avg-bad');
                 } else {
                     gradeCell.textContent = '';
+                    gradeCell.className = 'module-grade';
                 }
 
                 totalWeighted += grade * mod.coeff;
                 totalCoeff += mod.coeff;
-                details.push({name: mod.name, grade: grade.toFixed(2)});
+                details.push({name: mod.name, grade: grade.toFixed(2), passed: grade >= 10});
             });
 
             const avg = totalCoeff > 0 ? (totalWeighted / totalCoeff).toFixed(2) : '0.00';
@@ -282,25 +576,31 @@
 
             let html = `
                 <h2>Résultats</h2>
-                <h3>Semestre 5 - Moyenne : <span class="${getAvgClass(sem5.avg)}">${sem5.avg} / 20</span> 
-                    (Coeff total : ${sem5.totalCoeff})</h3>
+                
+                <h3>Semestre 5 - Moyenne : <span class="${getAvgClass(sem5.avg)}">${sem5.avg} / 20</span></h3>
                 <div class="module-details">
-                    <table>
-                        <tr><th>Module</th><th>Note</th></tr>
-                        ${sem5.details.map(d => `<tr><td>${d.name}</td><td>${d.grade}</td></tr>`).join('')}
-                    </table>
+                    <div class="table-wrapper">
+                        <table>
+                            <tr><th>Module</th><th>Note</th></tr>
+                            ${sem5.details.map(d => `<tr><td>${d.name}</td><td class="${d.passed ? 'avg-good' : 'avg-bad'}">${d.grade}</td></tr>`).join('')}
+                        </table>
+                    </div>
                 </div>
 
-                <h3>Semestre 6 - Moyenne : <span class="${getAvgClass(sem6.avg)}">${sem6.avg} / 20</span> 
-                    (Coeff total : ${sem6.totalCoeff})</h3>
+                <h3>Semestre 6 - Moyenne : <span class="${getAvgClass(sem6.avg)}">${sem6.avg} / 20</span></h3>
                 <div class="module-details">
-                    <table>
-                        <tr><th>Module</th><th>Note</th></tr>
-                        ${sem6.details.map(d => `<tr><td>${d.name}</td><td>${d.grade}</td></tr>`).join('')}
-                    </table>
+                    <div class="table-wrapper">
+                        <table>
+                            <tr><th>Module</th><th>Note</th></tr>
+                            ${sem6.details.map(d => `<tr><td>${d.name}</td><td class="${d.passed ? 'avg-good' : 'avg-bad'}">${d.grade}</td></tr>`).join('')}
+                        </table>
+                    </div>
                 </div>
 
-                <h3>Moyenne Annuelle : <span class="${getAvgClass(yearAvg)}">${yearAvg} / 20</span></h3>
+                <div class="yearly-avg">
+                    <h3>Moyenne Annuelle</h3>
+                    <div class="score ${getAvgClass(yearAvg)}">${yearAvg} / 20</div>
+                </div>
             `;
 
             document.getElementById('results').innerHTML = html;
